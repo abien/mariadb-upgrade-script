@@ -208,6 +208,7 @@ case $MySQL_VERS_INFO in
   do_mariadb_upgrade '10.1'
   do_mariadb_upgrade '10.2'
   do_mariadb_upgrade '10.5'
+  do_mariadb_upgrade '10.6'
   ;;
 
 *"Distrib 10.0"*)
@@ -216,30 +217,39 @@ case $MySQL_VERS_INFO in
   do_mariadb_upgrade '10.1'
   do_mariadb_upgrade '10.2'
   do_mariadb_upgrade '10.5'
+  do_mariadb_upgrade '10.6'
   ;;
 
 *"Distrib 10.1"*)
   echo "MariaDB 10.1 detected. Proceeding with upgrade to 10.5" | tee -a $LOG
   do_mariadb_upgrade '10.2'
   do_mariadb_upgrade '10.5'
+  do_mariadb_upgrade '10.6'
   ;;
 
 *"Distrib 10.2"*)
   echo "MariaDB 10.2 detected. Proceeding with upgrade to 10.5" | tee -a $LOG
   do_mariadb_upgrade '10.5'
+  do_mariadb_upgrade '10.6'
   ;;
 
 *"Distrib 10.3"*)
   echo "MariaDB 10.3 detected. Proceeding with upgrade to 10.5" | tee -a $LOG
   do_mariadb_upgrade '10.5'
+  do_mariadb_upgrade '10.6'
   ;;
 *"Distrib 10.4"*)
   echo "MariaDB 10.4 detected. Proceeding with upgrade to 10.5" | tee -a $LOG
   do_mariadb_upgrade '10.5'
+  do_mariadb_upgrade '10.6'
+  ;;
+*"Distrib 10.5"*)
+  echo "MariaDB 10.4 detected. Proceeding with upgrade to 10.5" | tee -a $LOG
+  do_mariadb_upgrade '10.6'
   ;;
 
-*"Distrib 10.5"*)
-  echo "Already at 10.5. Exiting." | tee -a $LOG
+*"Distrib 10.6"*)
+  echo "Already at 10.6. Exiting." | tee -a $LOG
   exit 1
   ;;
 
