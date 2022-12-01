@@ -10,7 +10,7 @@ read -p "Do you wish to back up all existing databases? (y/n) " -n 1 -r
 echo # new line
 if [[ ! $REPLY =~ ^[Nn]$ ]]; then
   echo "Proceeding with backup to /root/all_databases_pre_maria_upgrade.sql.gz ... This may take 5 minutes or so depending on size of databases."  | tee -a $LOG
-  if erroutput=$(mysqldump -u admin -p$(cat /etc/psa/.psa.shadow) --all-databases --routines --triggers --max_allowed_packet=1G | gzip >/root/all_databases_pre_maria_upgrade.sql.gz 2>&1); then
+  if erroutput=$(mysqldump -u admin -p"$(cat /etc/psa/.psa.shadow)" --all-databases --routines --triggers --max_allowed_packet=1G | gzip >/root/all_databases_pre_maria_upgrade.sql.gz 2>&1); then
     echo "- Backups successfully created" | tee -a $LOG
   else
     echo -e "${RED}Error:" | tee -a $LOG
@@ -96,13 +96,13 @@ gpgcheck=1" >/etc/yum.repos.d/mariadb.repo
     fi
   fi
   installed_packages=$(rpm -qa)
-  for i in "mysql-common mysql-libs mysql-devel mariadb-backup mariadb-gssapi-server"; do
+  for i in mysql-common mysql-libs mysql-devel mariadb-backup mariadb-gssapi-server; do
     if echo "$installed_packages" | grep "$i" > /dev/null 2>&1; then
       mariadb_rpm="$mariadb_rpm $i"
     fi
   done
-  if [ ! -z $mariadb_rpm ]; then
-    if erroutput=$(rpm --quiet -e --nodeps $mariadb_rpm 2>&1); then
+  if [ -n "$mariadb_rpm" ]; then
+    if erroutput=$(rpm --quiet -e --nodeps "$mariadb_rpm" 2>&1); then
       echo "- MariaDB packages erased" | tee -a $LOG
     else
       echo -e "${RED}$erroutput ${NC}" | tee -a $LOG
@@ -134,7 +134,7 @@ gpgcheck=1" >/etc/yum.repos.d/mariadb.repo
   fi
 
   echo "- Running mysql_upgrade"
-  if erroutput=$(mysql_upgrade -u admin -p$(cat /etc/psa/.psa.shadow) 2>&1); then
+  if erroutput=$(mysql_upgrade -u admin -p"$(cat /etc/psa/.psa.shadow)" 2>&1); then
     echo "- MySQL/MariaDB upgrade to $MDB_VER was Successful" | tee -a $LOG
   else
     echo -e "${RED}Failed to upgrade to MySQL/MariaDB $MDB_VER" | tee -a $LOG
