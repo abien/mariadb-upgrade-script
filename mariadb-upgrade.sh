@@ -163,7 +163,7 @@ case $MySQL_VERS_INFO in
   ;;
 
 *"Distrib 5.6."*)
-  echo "MySQL or Percona 5.6 detected. Proceeding with 5.6 -> 10.0 -> 10.5" | tee -a $LOG
+  echo "MySQL or Percona 5.6 detected. Proceeding with 5.6 -> 10.0 -> 10.5 -> 10.6" | tee -a $LOG
   # shellcheck disable=SC2143
   if [[ $(rpm -qa | grep Percona-Server-server) ]]; then
     # Removing Percona server and disabling repo
