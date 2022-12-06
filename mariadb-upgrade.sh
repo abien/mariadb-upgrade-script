@@ -10,7 +10,7 @@ read -p "Do you wish to back up all existing databases? (y/n) " -n 1 -r
 echo # new line
 if [[ ! $REPLY =~ ^[Nn]$ ]]; then
   echo "Proceeding with backup to /root/all_databases_pre_maria_upgrade.sql.gz ... This may take 5 minutes or so depending on size of databases."  | tee -a $LOG
-  if erroutput=$(mysqldump -u admin -p$(cat /etc/psa/.psa.shadow) --all-databases --routines --triggers --max_allowed_packet=1G | gzip >/root/all_databases_pre_maria_upgrade.sql.gz 2>&1); then
+  if erroutput=$(mysqldump -u admin -p"$(cat /etc/psa/.psa.shadow)" --all-databases --routines --triggers --max_allowed_packet=1G | gzip >/root/all_databases_pre_maria_upgrade.sql.gz 2>&1); then
     echo "- Backups successfully created" | tee -a $LOG
   else
     echo -e "${RED}Error:" | tee -a $LOG
@@ -21,7 +21,7 @@ else
   echo "A risk taker, I see. Carrying on with upgrade procedures without backup..." | tee -a $LOG
 fi
 
-read -p "Are you sure you wish to proceed with the upgrade to MariaDB 10.5? (y/n) " -n 1 -r
+read -p "Are you sure you wish to proceed with the upgrade to MariaDB 10.6? (y/n) " -n 1 -r
 echo # new line
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
   # shellcheck disable=SC2128
@@ -96,13 +96,13 @@ gpgcheck=1" >/etc/yum.repos.d/mariadb.repo
     fi
   fi
   installed_packages=$(rpm -qa)
-  for i in "mysql-common mysql-libs mysql-devel mariadb-backup mariadb-gssapi-server"; do
+  for i in mysql-common mysql-libs mysql-devel mariadb-backup mariadb-gssapi-server; do
     if echo "$installed_packages" | grep "$i" > /dev/null 2>&1; then
       mariadb_rpm="$mariadb_rpm $i"
     fi
   done
-  if [ ! -z $mariadb_rpm ]; then
-    if erroutput=$(rpm --quiet -e --nodeps $mariadb_rpm 2>&1); then
+  if [ -n "$mariadb_rpm" ]; then
+    if erroutput=$(rpm --quiet -e --nodeps "$mariadb_rpm" 2>&1); then
       echo "- MariaDB packages erased" | tee -a $LOG
     else
       echo -e "${RED}$erroutput ${NC}" | tee -a $LOG
@@ -134,7 +134,7 @@ gpgcheck=1" >/etc/yum.repos.d/mariadb.repo
   fi
 
   echo "- Running mysql_upgrade"
-  if erroutput=$(mysql_upgrade -u admin -p$(cat /etc/psa/.psa.shadow) 2>&1); then
+  if erroutput=$(mysql_upgrade -u admin -p"$(cat /etc/psa/.psa.shadow)" 2>&1); then
     echo "- MySQL/MariaDB upgrade to $MDB_VER was Successful" | tee -a $LOG
   else
     echo -e "${RED}Failed to upgrade to MySQL/MariaDB $MDB_VER" | tee -a $LOG
@@ -154,15 +154,16 @@ systemctl stop sw-cp-server
 
 case $MySQL_VERS_INFO in
 *"Distrib 5.5."*)
-  echo "MySQL / MariaDB 5.5 detected. Proceeding with 5.5 -> 10.0 -> 10.5"
+  echo "MySQL / MariaDB 5.5 detected. Proceeding with 5.5 -> 10.0 -> 10.5 -> 10.6"
   rpm -e --nodeps mysql-server
   mv -f /etc/my.cnf /etc/my.cnf.bak
   do_mariadb_upgrade '10.0'
   do_mariadb_upgrade '10.5'
+  do_mariadb_upgrade '10.6'
   ;;
 
 *"Distrib 5.6."*)
-  echo "MySQL or Percona 5.6 detected. Proceeding with 5.6 -> 10.0 -> 10.5" | tee -a $LOG
+  echo "MySQL or Percona 5.6 detected. Proceeding with 5.6 -> 10.0 -> 10.5 -> 10.6" | tee -a $LOG
   # shellcheck disable=SC2143
   if [[ $(rpm -qa | grep Percona-Server-server) ]]; then
     # Removing Percona server and disabling repo
@@ -208,38 +209,48 @@ case $MySQL_VERS_INFO in
   do_mariadb_upgrade '10.1'
   do_mariadb_upgrade '10.2'
   do_mariadb_upgrade '10.5'
+  do_mariadb_upgrade '10.6'
   ;;
 
 *"Distrib 10.0"*)
-  echo "MariaDB 10.0 detected. Proceeding with upgrade to 10.5" | tee -a $LOG
+  echo "MariaDB 10.0 detected. Proceeding with upgrade to 10.6" | tee -a $LOG
   mv -f /etc/my.cnf /etc/my.cnf.bak
   do_mariadb_upgrade '10.1'
   do_mariadb_upgrade '10.2'
   do_mariadb_upgrade '10.5'
+  do_mariadb_upgrade '10.6'
   ;;
 
 *"Distrib 10.1"*)
-  echo "MariaDB 10.1 detected. Proceeding with upgrade to 10.5" | tee -a $LOG
+  echo "MariaDB 10.1 detected. Proceeding with upgrade to 10.6" | tee -a $LOG
   do_mariadb_upgrade '10.2'
   do_mariadb_upgrade '10.5'
+  do_mariadb_upgrade '10.6'
   ;;
 
 *"Distrib 10.2"*)
-  echo "MariaDB 10.2 detected. Proceeding with upgrade to 10.5" | tee -a $LOG
+  echo "MariaDB 10.2 detected. Proceeding with upgrade to 10.6" | tee -a $LOG
   do_mariadb_upgrade '10.5'
+  do_mariadb_upgrade '10.6'
   ;;
 
 *"Distrib 10.3"*)
-  echo "MariaDB 10.3 detected. Proceeding with upgrade to 10.5" | tee -a $LOG
+  echo "MariaDB 10.3 detected. Proceeding with upgrade to 10.6" | tee -a $LOG
   do_mariadb_upgrade '10.5'
+  do_mariadb_upgrade '10.6'
   ;;
 *"Distrib 10.4"*)
-  echo "MariaDB 10.4 detected. Proceeding with upgrade to 10.5" | tee -a $LOG
+  echo "MariaDB 10.4 detected. Proceeding with upgrade to 10.6" | tee -a $LOG
   do_mariadb_upgrade '10.5'
+  do_mariadb_upgrade '10.6'
+  ;;
+*"Distrib 10.5"*)
+  echo "MariaDB 10.5 detected. Proceeding with upgrade to 10.6" | tee -a $LOG
+  do_mariadb_upgrade '10.6'
   ;;
 
-*"Distrib 10.5"*)
-  echo "Already at 10.5. Exiting." | tee -a $LOG
+*"Distrib 10.6"*)
+  echo "Already at 10.6. Exiting." | tee -a $LOG
   exit 1
   ;;
 
