@@ -214,7 +214,7 @@ case $MySQL_VERS_INFO in
     do_mariadb_upgrade '10.11'
   ;;
 
-  *"Distrib 10.0"*)
+  *"Distrib 10.0."*)
     echo "MariaDB 10.0 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
     mv -f /etc/my.cnf /etc/my.cnf.bak
     do_mariadb_upgrade '10.1'
@@ -224,7 +224,7 @@ case $MySQL_VERS_INFO in
     do_mariadb_upgrade '10.11'
     ;;
 
-  *"Distrib 10.1"*)
+  *"Distrib 10.1."*)
     echo "MariaDB 10.1 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
     do_mariadb_upgrade '10.2'
     do_mariadb_upgrade '10.5'
@@ -232,59 +232,59 @@ case $MySQL_VERS_INFO in
     do_mariadb_upgrade '10.11'
     ;;
 
-  *"Distrib 10.2"*)
+  *"Distrib 10.2."*)
     echo "MariaDB 10.2 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
     ;;
 
-  *"Distrib 10.3"*)
+  *"Distrib 10.3."*)
     echo "MariaDB 10.3 detected. Proceeding with upgrade to 10.6" | tee -a $LOG
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
     ;;
   
-  *"Distrib 10.4"*)
+  *"Distrib 10.4."*)
     echo "MariaDB 10.4 detected. Proceeding with upgrade to 10.6" | tee -a $LOG
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
     ;;
 
-  *"Distrib 10.5"*)
+  *"Distrib 10.5."*)
     echo "MariaDB 10.5 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
     ;;
 
-  *"Distrib 10.6"*)
+  *"Distrib 10.6."*)
     echo "MariaDB 10.6 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
     do_mariadb_upgrade '10.11'
     ;;
 
-  *"Distrib 10.7"*)
+  *"Distrib 10.7."*)
     echo "MariaDB 10.7 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
     do_mariadb_upgrade '10.11'
     ;;
 
-  *"Distrib 10.8"*)
+  *"Distrib 10.8."*)
     echo "MariaDB 10.8 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
     do_mariadb_upgrade '10.11'
     ;;
 
-  *"Distrib 10.9"*)
+  *"Distrib 10.9."*)
     echo "MariaDB 10.9 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
     do_mariadb_upgrade '10.11'
     ;;
 
-  *"Distrib 10.10"*)
+  *"Distrib 10.10."*)
     echo "MariaDB 10.10 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
     do_mariadb_upgrade '10.11'
     ;;
 
-  *"Distrib 10.11"*)
+  *"Distrib 10.11."*)
     echo "Already at 10.11. Exiting." | tee -a $LOG
     exit 1
     ;;
