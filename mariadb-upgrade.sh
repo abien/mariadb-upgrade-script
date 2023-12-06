@@ -37,34 +37,38 @@ do_mariadb_upgrade() {
   source /etc/os-release
   MAJOR_VER="${VERSION_ID:0:1}" #ex: 7 or 8 rather than 7.4 or 8.4
 
-  if [[ "$ID" = "almalinux" ]]; then 
-    ID=rhel; 
+  if [[ "$ID" = "almalinux" ]]; then
+    ID=rhel;
   fi
 
   echo "Beginning upgrade to MariaDB $MDB_VER..." | tee -a $LOG
 
   DATE=$(date)
-  if [ "$MDB_VER" = "10.0" ]; then
 
-    echo "# MariaDB $MDB_VER CentOS repository list - created $DATE
-# 10.0.38 is the latest version in 10.0.x
-[mariadb]
-name = MariaDB
-baseurl = https://archive.mariadb.org/mariadb-10.0.38/yum/centos7-amd64/
-module_hotfixes=1
-gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
-gpgcheck=1" >/etc/yum.repos.d/mariadb.repo
+case "$MDB_VER" in
+  "10.0")
+    BASEURL="https://archive.mariadb.org/mariadb-10.0.38/yum/centos7-amd64/"
+    ;;
+  "10.1")
+    BASEURL="https://archive.mariadb.org/mariadb-10.1.48/yum/centos7-amd64/"
+    ;;
+  "10.2")
+    BASEURL="https://archive.mariadb.org/mariadb-10.2.44/yum/centos7-amd64/"
+    ;;
+  *)
+    BASEURL="http://yum.mariadb.org/$MDB_VER/$ID$MAJOR_VER-amd64"
+    ;;
+esac
 
-  else
-    echo "# MariaDB $MDB_VER CentOS repository list - created $DATE
+echo "# MariaDB $MDB_VER CentOS repository list - created $DATE
 # http://downloads.mariadb.org/mariadb/repositories/
 [mariadb]
 name = MariaDB
-baseurl = http://yum.mariadb.org/$MDB_VER/$ID$MAJOR_VER-amd64
+baseurl = $BASEURL
 module_hotfixes=1
 gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
 gpgcheck=1" >/etc/yum.repos.d/mariadb.repo
-  fi
+
 
   echo "- Clearing mariadb repo cache" | tee -a $LOG
   if erroutput=$(yum clean all --disablerepo="*" --enablerepo=mariadb 2>&1); then
@@ -140,6 +144,20 @@ gpgcheck=1" >/etc/yum.repos.d/mariadb.repo
     echo -e "${RED}Failed to upgrade to MySQL/MariaDB $MDB_VER" | tee -a $LOG
     echo -e "$erroutput ${NC}" | tee -a $LOG
     exit 1
+  fi
+}
+
+bind_address_fix() {
+  CONFIG_FILE="/etc/my.cnf"
+
+  echo "Fixing bind-address.."
+
+  # Grep and replace (via sed)
+  grep -q "bind-address = ::ffff:127.0.0.1" $CONFIG_FILE && sed -i 's/bind-address = ::ffff:127.0.0.1/#bind-address = ::ffff:127.0.0.1/' $CONFIG_FILE
+
+  # If bind-address isnt set
+  if ! grep -q "bind-address = " $CONFIG_FILE; then
+    echo "bind-address = 127.0.0.1" >> $CONFIG_FILE
   fi
 }
 
@@ -245,7 +263,7 @@ case $MySQL_VERS_INFO in
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
     ;;
-  
+
   *"Distrib 10.4."*)
     echo "MariaDB 10.4 detected. Proceeding with upgrade to 10.6" | tee -a $LOG
     do_mariadb_upgrade '10.5'
@@ -390,4 +408,3 @@ systemctl daemon-reload
 plesk db "install plugin unix_socket soname 'auth_socket';" >/dev/null 2>&1
 plesk db "CREATE USER 'root'@'localhost' IDENTIFIED VIA unix_socket;" >/dev/null 2>&1
 plesk db "GRANT RELOAD ON *.* TO 'root'@'localhost';" >/dev/null 2>&1
-
