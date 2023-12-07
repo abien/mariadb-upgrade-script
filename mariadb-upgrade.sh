@@ -131,7 +131,7 @@ gpgcheck=1" >/etc/yum.repos.d/mariadb.repo
   fi
 
   echo "Fixing bind address.."
-  if [ "$MDB_VER" = "10.5"]; then
+  if [ "$MDB_VER" = "10.5" ]; then
     bind_address_fix
   fi
 
