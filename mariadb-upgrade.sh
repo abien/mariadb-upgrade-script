@@ -130,6 +130,10 @@ gpgcheck=1" >/etc/yum.repos.d/mariadb.repo
     exit 1
   fi
 
+  if [ "$MDB_VER" = "10.6" ]; then
+    bind_address_fix
+  fi
+
   echo "- Starting MariaDB $MDB_VER"
   if [ "$MDB_VER" = "10.0" ]; then
     systemctl restart mysql
@@ -153,7 +157,7 @@ bind_address_fix() {
   echo "Fixing bind-address.."
 
   # Grep and replace (via sed)
-  grep -q "bind-address = ::ffff:127.0.0.1" $CONFIG_FILE && sed -i 's/bind-address = ::ffff:127.0.0.1/#bind-address = ::ffff:127.0.0.1/' $CONFIG_FILE
+  grep -q "bind-address = ::ffff:127.0.0.1" $CONFIG_FILE && sed -i 's/bind-address = ::ffff:127.0.0.1//' $CONFIG_FILE
 
   # If bind-address isnt set
   if ! grep -q "bind-address = " $CONFIG_FILE; then
