@@ -157,7 +157,7 @@ bind_address_fix() {
   echo "Fixing bind-address.."
 
   # Grep and replace (via sed)
-  grep -q "bind-address = ::ffff:127.0.0.1" $CONFIG_FILE && sed -i 's/bind-address = ::ffff:127.0.0.1/#bind-address = ::ffff:127.0.0.1/' $CONFIG_FILE
+  grep -q "bind-address = ::ffff:127.0.0.1" $CONFIG_FILE && sed -i 's/bind-address = ::ffff:127.0.0.1//' $CONFIG_FILE
 
   # If bind-address isnt set
   if ! grep -q "bind-address = " $CONFIG_FILE; then
