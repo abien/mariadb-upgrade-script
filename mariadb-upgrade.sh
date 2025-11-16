@@ -21,7 +21,23 @@ else
   echo "A risk taker, I see. Carrying on with upgrade procedures without backup..." | tee -a $LOG
 fi
 
-read -p "Are you sure you wish to proceed with the upgrade to MariaDB 10.11? (y/n) " -n 1 -r
+echo ""
+echo "Which MariaDB LTS version would you like to upgrade to?"
+echo "1) MariaDB 10.11 LTS (supported until February 2028)"
+echo "2) MariaDB 11.4 LTS (supported until May 2029)"
+read -p "Enter your choice (1 or 2): " -n 1 -r
+echo # new line
+
+if [[ $REPLY = "1" ]]; then
+  TARGET_VERSION="10.11"
+elif [[ $REPLY = "2" ]]; then
+  TARGET_VERSION="11.4"
+else
+  echo "Invalid choice. Exiting."
+  exit 1
+fi
+
+read -p "Are you sure you wish to proceed with the upgrade to MariaDB $TARGET_VERSION? (y/n) " -n 1 -r
 echo # new line
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
   # shellcheck disable=SC2128
@@ -176,17 +192,20 @@ systemctl stop sw-cp-server
 
 case $MySQL_VERS_INFO in
 *"Distrib 5.5."*)
-  echo "MySQL / MariaDB 5.5 detected. Proceeding with 5.5 -> 10.0 -> 10.5 -> 10.6 -> 10.11"
+  echo "MySQL / MariaDB 5.5 detected. Proceeding with upgrade to $TARGET_VERSION"
   rpm -e --nodeps mysql-server
   mv -f /etc/my.cnf /etc/my.cnf.bak
     do_mariadb_upgrade '10.0'
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
+    if [ "$TARGET_VERSION" = "11.4" ]; then
+      do_mariadb_upgrade '11.4'
+    fi
   ;;
 
-*"Distrib 5.6."*)
-  echo "MySQL or Percona 5.6 detected. Proceeding with 5.6 -> 10.0 -> 10.5 -> 10.6 -> 10.11" | tee -a $LOG
+  *"Distrib 5.6."*)
+  echo "MySQL or Percona 5.6 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
   # shellcheck disable=SC2143
   if [[ $(rpm -qa | grep Percona-Server-server) ]]; then
     # Removing Percona server and disabling repo
@@ -234,82 +253,158 @@ case $MySQL_VERS_INFO in
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
+    if [ "$TARGET_VERSION" = "11.4" ]; then
+      do_mariadb_upgrade '11.4'
+    fi
   ;;
 
   *"Distrib 10.0."*)
-    echo "MariaDB 10.0 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
+    echo "MariaDB 10.0 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     mv -f /etc/my.cnf /etc/my.cnf.bak
     do_mariadb_upgrade '10.1'
     do_mariadb_upgrade '10.2'
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
+    if [ "$TARGET_VERSION" = "11.4" ]; then
+      do_mariadb_upgrade '11.4'
+    fi
     ;;
 
   *"Distrib 10.1."*)
-    echo "MariaDB 10.1 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
+    echo "MariaDB 10.1 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.2'
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
+    if [ "$TARGET_VERSION" = "11.4" ]; then
+      do_mariadb_upgrade '11.4'
+    fi
     ;;
 
   *"Distrib 10.2."*)
-    echo "MariaDB 10.2 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
+    echo "MariaDB 10.2 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
+    if [ "$TARGET_VERSION" = "11.4" ]; then
+      do_mariadb_upgrade '11.4'
+    fi
     ;;
 
   *"Distrib 10.3."*)
-    echo "MariaDB 10.3 detected. Proceeding with upgrade to 10.6" | tee -a $LOG
+    echo "MariaDB 10.3 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
+    if [ "$TARGET_VERSION" = "11.4" ]; then
+      do_mariadb_upgrade '11.4'
+    fi
     ;;
 
   *"Distrib 10.4."*)
-    echo "MariaDB 10.4 detected. Proceeding with upgrade to 10.6" | tee -a $LOG
+    echo "MariaDB 10.4 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
+    if [ "$TARGET_VERSION" = "11.4" ]; then
+      do_mariadb_upgrade '11.4'
+    fi
     ;;
 
   *"Distrib 10.5."*)
-    echo "MariaDB 10.5 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
+    echo "MariaDB 10.5 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
+    if [ "$TARGET_VERSION" = "11.4" ]; then
+      do_mariadb_upgrade '11.4'
+    fi
     ;;
 
   *"Distrib 10.6."*)
-    echo "MariaDB 10.6 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
+    echo "MariaDB 10.6 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.11'
+    if [ "$TARGET_VERSION" = "11.4" ]; then
+      do_mariadb_upgrade '11.4'
+    fi
     ;;
 
   *"Distrib 10.7."*)
-    echo "MariaDB 10.7 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
+    echo "MariaDB 10.7 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.11'
+    if [ "$TARGET_VERSION" = "11.4" ]; then
+      do_mariadb_upgrade '11.4'
+    fi
     ;;
 
   *"Distrib 10.8."*)
-    echo "MariaDB 10.8 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
+    echo "MariaDB 10.8 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.11'
+    if [ "$TARGET_VERSION" = "11.4" ]; then
+      do_mariadb_upgrade '11.4'
+    fi
     ;;
 
   *"Distrib 10.9."*)
-    echo "MariaDB 10.9 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
+    echo "MariaDB 10.9 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.11'
+    if [ "$TARGET_VERSION" = "11.4" ]; then
+      do_mariadb_upgrade '11.4'
+    fi
     ;;
 
   *"Distrib 10.10."*)
-    echo "MariaDB 10.10 detected. Proceeding with upgrade to 10.11" | tee -a $LOG
+    echo "MariaDB 10.10 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.11'
+    if [ "$TARGET_VERSION" = "11.4" ]; then
+      do_mariadb_upgrade '11.4'
+    fi
     ;;
 
   *"Distrib 10.11."*)
-    echo "Already at 10.11. Exiting." | tee -a $LOG
+    if [ "$TARGET_VERSION" = "11.4" ]; then
+      echo "MariaDB 10.11 detected. Proceeding with upgrade to 11.4" | tee -a $LOG
+      do_mariadb_upgrade '11.4'
+    else
+      echo "Already at 10.11. Exiting." | tee -a $LOG
+      exit 1
+    fi
+    ;;do_mariadb_upgrade '11.4'
+    else
+      echo "Already at 10.11. Exiting." | tee -a $LOG
+      exit 1
+    fi
+    ;;
+
+  *"Distrib 11.0."*)
+    echo "MariaDB 11.0 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
+    do_mariadb_upgrade '11.4'
+    ;;
+
+  *"Distrib 11.1."*)
+    echo "MariaDB 11.1 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
+    do_mariadb_upgrade '11.4'
+    ;;
+
+  *"Distrib 11.2."*)
+    echo "MariaDB 11.2 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
+    do_mariadb_upgrade '11.4'
+    ;;
+
+  *"Distrib 11.3."*)
+    echo "MariaDB 11.3 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
+    do_mariadb_upgrade '11.4'
+    ;;
+
+  *"Distrib 11.4."*)
+    echo "Already at 11.4. Exiting." | tee -a $LOG
     exit 1
     ;;
+
+*)
+  echo "Error. Unknown initial MySQL version. Aborting." | tee -a $LOG
+  exit 1
+  ;;
 
 *)
   echo "Error. Unknown initial MySQL version. Aborting." | tee -a $LOG
