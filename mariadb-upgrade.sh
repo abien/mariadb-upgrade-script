@@ -369,11 +369,6 @@ case $MySQL_VERS_INFO in
       echo "Already at 10.11. Exiting." | tee -a $LOG
       exit 1
     fi
-    ;;do_mariadb_upgrade '11.4'
-    else
-      echo "Already at 10.11. Exiting." | tee -a $LOG
-      exit 1
-    fi
     ;;
 
   *"Distrib 11.0."*)
@@ -400,11 +395,6 @@ case $MySQL_VERS_INFO in
     echo "Already at 11.4. Exiting." | tee -a $LOG
     exit 1
     ;;
-
-*)
-  echo "Error. Unknown initial MySQL version. Aborting." | tee -a $LOG
-  exit 1
-  ;;
 
 *)
   echo "Error. Unknown initial MySQL version. Aborting." | tee -a $LOG
