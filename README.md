@@ -1,11 +1,12 @@
 # Description
-Upgrade MariaDB from 5.5/10.x/11.x to MariaDB 10.11 LTS or 11.4 LTS on CentOS 7 and AlmaLinux/Rocky Linux 8, intended for Plesk environments. The script also configures MariaDB so you can run `mysqladmin` without entering credentials interactively.
+Upgrade MariaDB from 5.5/10.x/11.x to MariaDB 10.11 LTS, 11.4 LTS, or 11.8 LTS on CentOS 7 and AlmaLinux/Rocky Linux 8, intended for Plesk environments. The script also configures MariaDB so you can run `mysqladmin` without entering credentials interactively.
 
 It integrates with Plesk to perform backups, run upgrades, and notify Plesk of version changes.
 
 ## Supported Target Versions
 - MariaDB 10.11 LTS
 - MariaDB 11.4 LTS
+- MariaDB 11.8 LTS
 
 ## Requirements
 - Root privileges (`root` or `sudo`).
@@ -40,6 +41,14 @@ The script detects the current version and chooses the correct path automaticall
 - From 10.x: (first upgrade to 10.11) → 11.4
 - From 11.0–11.3: 11.x → 11.4
 
+### Target: MariaDB 11.8 LTS
+- From 5.5: 5.5 → 10.0 → 10.5 → 10.6 → 10.11 → 11.4 → 11.8
+- From 5.6: 5.6 → 10.0 → 10.1 → 10.2 → 10.5 → 10.6 → 10.11 → 11.4 → 11.8
+- From 10.x: (first upgrade to 10.11) → 11.4 → 11.8
+- From 11.0–11.3: 11.x → 11.4 → 11.8
+- From 11.4: 11.4 → 11.8
+- From 11.5–11.7: 11.x → 11.8
+
 ## Usage
 Run the script as `root`:
 
@@ -50,7 +59,7 @@ chmod +x mariadb-upgrade.sh
 
 The script will prompt you to:
 1. Choose whether to back up databases (recommended)
-2. Select a target version (10.11 or 11.4)
+2. Select a target version (10.11, 11.4, or 11.8)
 3. Confirm the upgrade
 
 ## Notes & Limitations

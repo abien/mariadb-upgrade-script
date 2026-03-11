@@ -25,13 +25,16 @@ echo ""
 echo "Which MariaDB LTS version would you like to upgrade to?"
 echo "1) MariaDB 10.11 LTS (supported until February 2028)"
 echo "2) MariaDB 11.4 LTS (supported until May 2029)"
-read -p "Enter your choice (1 or 2): " -n 1 -r
+echo "3) MariaDB 11.8 LTS (supported until June 2030)"
+read -p "Enter your choice (1, 2, or 3): " -n 1 -r
 echo # new line
 
 if [[ $REPLY = "1" ]]; then
   TARGET_VERSION="10.11"
 elif [[ $REPLY = "2" ]]; then
   TARGET_VERSION="11.4"
+elif [[ $REPLY = "3" ]]; then
+  TARGET_VERSION="11.8"
 else
   echo "Invalid choice. Exiting."
   exit 1
@@ -199,8 +202,11 @@ case $MySQL_VERS_INFO in
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
-    if [ "$TARGET_VERSION" = "11.4" ]; then
+    if [ "$TARGET_VERSION" = "11.4" ] || [ "$TARGET_VERSION" = "11.8" ]; then
       do_mariadb_upgrade '11.4'
+    fi
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
     fi
   ;;
 
@@ -253,8 +259,11 @@ case $MySQL_VERS_INFO in
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
-    if [ "$TARGET_VERSION" = "11.4" ]; then
+    if [ "$TARGET_VERSION" = "11.4" ] || [ "$TARGET_VERSION" = "11.8" ]; then
       do_mariadb_upgrade '11.4'
+    fi
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
     fi
   ;;
 
@@ -266,8 +275,11 @@ case $MySQL_VERS_INFO in
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
-    if [ "$TARGET_VERSION" = "11.4" ]; then
+    if [ "$TARGET_VERSION" = "11.4" ] || [ "$TARGET_VERSION" = "11.8" ]; then
       do_mariadb_upgrade '11.4'
+    fi
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
     fi
     ;;
 
@@ -277,8 +289,11 @@ case $MySQL_VERS_INFO in
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
-    if [ "$TARGET_VERSION" = "11.4" ]; then
+    if [ "$TARGET_VERSION" = "11.4" ] || [ "$TARGET_VERSION" = "11.8" ]; then
       do_mariadb_upgrade '11.4'
+    fi
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
     fi
     ;;
 
@@ -287,8 +302,11 @@ case $MySQL_VERS_INFO in
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
-    if [ "$TARGET_VERSION" = "11.4" ]; then
+    if [ "$TARGET_VERSION" = "11.4" ] || [ "$TARGET_VERSION" = "11.8" ]; then
       do_mariadb_upgrade '11.4'
+    fi
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
     fi
     ;;
 
@@ -297,8 +315,11 @@ case $MySQL_VERS_INFO in
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
-    if [ "$TARGET_VERSION" = "11.4" ]; then
+    if [ "$TARGET_VERSION" = "11.4" ] || [ "$TARGET_VERSION" = "11.8" ]; then
       do_mariadb_upgrade '11.4'
+    fi
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
     fi
     ;;
 
@@ -307,8 +328,11 @@ case $MySQL_VERS_INFO in
     do_mariadb_upgrade '10.5'
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
-    if [ "$TARGET_VERSION" = "11.4" ]; then
+    if [ "$TARGET_VERSION" = "11.4" ] || [ "$TARGET_VERSION" = "11.8" ]; then
       do_mariadb_upgrade '11.4'
+    fi
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
     fi
     ;;
 
@@ -316,83 +340,142 @@ case $MySQL_VERS_INFO in
     echo "MariaDB 10.5 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.6'
     do_mariadb_upgrade '10.11'
-    if [ "$TARGET_VERSION" = "11.4" ]; then
+    if [ "$TARGET_VERSION" = "11.4" ] || [ "$TARGET_VERSION" = "11.8" ]; then
       do_mariadb_upgrade '11.4'
+    fi
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
     fi
     ;;
 
   *"Distrib 10.6."*)
     echo "MariaDB 10.6 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.11'
-    if [ "$TARGET_VERSION" = "11.4" ]; then
+    if [ "$TARGET_VERSION" = "11.4" ] || [ "$TARGET_VERSION" = "11.8" ]; then
       do_mariadb_upgrade '11.4'
+    fi
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
     fi
     ;;
 
   *"Distrib 10.7."*)
     echo "MariaDB 10.7 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.11'
-    if [ "$TARGET_VERSION" = "11.4" ]; then
+    if [ "$TARGET_VERSION" = "11.4" ] || [ "$TARGET_VERSION" = "11.8" ]; then
       do_mariadb_upgrade '11.4'
+    fi
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
     fi
     ;;
 
   *"Distrib 10.8."*)
     echo "MariaDB 10.8 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.11'
-    if [ "$TARGET_VERSION" = "11.4" ]; then
+    if [ "$TARGET_VERSION" = "11.4" ] || [ "$TARGET_VERSION" = "11.8" ]; then
       do_mariadb_upgrade '11.4'
+    fi
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
     fi
     ;;
 
   *"Distrib 10.9."*)
     echo "MariaDB 10.9 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.11'
-    if [ "$TARGET_VERSION" = "11.4" ]; then
+    if [ "$TARGET_VERSION" = "11.4" ] || [ "$TARGET_VERSION" = "11.8" ]; then
       do_mariadb_upgrade '11.4'
+    fi
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
     fi
     ;;
 
   *"Distrib 10.10."*)
     echo "MariaDB 10.10 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '10.11'
-    if [ "$TARGET_VERSION" = "11.4" ]; then
+    if [ "$TARGET_VERSION" = "11.4" ] || [ "$TARGET_VERSION" = "11.8" ]; then
       do_mariadb_upgrade '11.4'
+    fi
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
     fi
     ;;
 
   *"Distrib 10.11."*)
-    if [ "$TARGET_VERSION" = "11.4" ]; then
-      echo "MariaDB 10.11 detected. Proceeding with upgrade to 11.4" | tee -a $LOG
-      do_mariadb_upgrade '11.4'
-    else
+    if [ "$TARGET_VERSION" = "10.11" ]; then
       echo "Already at 10.11. Exiting." | tee -a $LOG
       exit 1
+    fi
+    echo "MariaDB 10.11 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
+    if [ "$TARGET_VERSION" = "11.4" ] || [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.4'
+    fi
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
     fi
     ;;
 
   *"Distrib 11.0."*)
     echo "MariaDB 11.0 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '11.4'
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
+    fi
     ;;
 
   *"Distrib 11.1."*)
     echo "MariaDB 11.1 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '11.4'
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
+    fi
     ;;
 
   *"Distrib 11.2."*)
     echo "MariaDB 11.2 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '11.4'
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
+    fi
     ;;
 
   *"Distrib 11.3."*)
     echo "MariaDB 11.3 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
     do_mariadb_upgrade '11.4'
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      do_mariadb_upgrade '11.8'
+    fi
     ;;
 
   *"Distrib 11.4."*)
-    echo "Already at 11.4. Exiting." | tee -a $LOG
+    if [ "$TARGET_VERSION" = "11.8" ]; then
+      echo "MariaDB 11.4 detected. Proceeding with upgrade to 11.8" | tee -a $LOG
+      do_mariadb_upgrade '11.8'
+    else
+      echo "Already at 11.4. Exiting." | tee -a $LOG
+      exit 1
+    fi
+    ;;
+
+  *"Distrib 11.5."*)
+    echo "MariaDB 11.5 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
+    do_mariadb_upgrade '11.8'
+    ;;
+
+  *"Distrib 11.6."*)
+    echo "MariaDB 11.6 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
+    do_mariadb_upgrade '11.8'
+    ;;
+
+  *"Distrib 11.7."*)
+    echo "MariaDB 11.7 detected. Proceeding with upgrade to $TARGET_VERSION" | tee -a $LOG
+    do_mariadb_upgrade '11.8'
+    ;;
+
+  *"Distrib 11.8."*)
+    echo "Already at 11.8. Exiting." | tee -a $LOG
     exit 1
     ;;
 
