@@ -26,6 +26,11 @@ if ! flock -n 9; then
 fi
 
 # Create secure credentials file for MySQL operations (avoids password in ps output)
+if [ ! -r "/etc/psa/.psa.shadow" ]; then
+  echo "Plesk admin password file /etc/psa/.psa.shadow is not readable. Exiting." >&2
+  exit 1
+fi
+
 MYSQL_CREDS_FILE=$(mktemp /tmp/mariadb-upgrade-creds.XXXXXX)
 chmod 600 "$MYSQL_CREDS_FILE"
 printf '[client]\nuser=admin\npassword=%s\n' "$(cat /etc/psa/.psa.shadow)" > "$MYSQL_CREDS_FILE"
@@ -83,16 +88,23 @@ fi
 do_mariadb_upgrade() {
 
   MDB_VER=$1
-  mariadb_rpm=""
   #MAJOR_VER=$(rpm --eval '%{rhel}')
   # Gets us ID and VERSION_ID vars
   # shellcheck disable=SC1091
   source /etc/os-release
   MAJOR_VER="${VERSION_ID:0:1}" #ex: 7 or 8 rather than 7.4 or 8.4
 
-  if [[ "$ID" = "almalinux" ]]; then
-    ID=rhel;
-  fi
+  case "$ID" in
+    almalinux|rocky|rockylinux)
+      ID=rhel
+      ;;
+    centos|rhel)
+      ;;
+    *)
+      echo -e "${RED}Unsupported OS ID '$ID'. Aborting before changing packages.${NC}" | tee -a $LOG
+      exit 1
+      ;;
+  esac
 
   echo "Beginning upgrade to MariaDB $MDB_VER..." | tee -a $LOG
 
@@ -125,7 +137,7 @@ module_hotfixes=1
 gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
 gpgcheck=1" >/etc/yum.repos.d/mariadb.repo
 
-
+  echo "- Using MariaDB repo: $BASEURL" | tee -a $LOG
   echo "- Clearing mariadb repo cache" | tee -a $LOG
   if erroutput=$(yum clean all --disablerepo="*" --enablerepo=mariadb 2>&1); then
     echo "- mariadb repo cache cleared" | tee -a $LOG
@@ -134,43 +146,84 @@ gpgcheck=1" >/etc/yum.repos.d/mariadb.repo
     echo -e "$erroutput ${NC}" | tee -a $LOG
     exit 1
   fi
+
+  echo "- Validating mariadb repo metadata" | tee -a $LOG
+  if erroutput=$(yum -q --disablerepo="*" --enablerepo=mariadb makecache 2>&1); then
+    echo "- mariadb repo metadata validated" | tee -a $LOG
+  else
+    echo -e "${RED}Failed to validate MariaDB $MDB_VER repo metadata. Aborting before this upgrade step stops/removes the current database server." | tee -a $LOG
+    echo -e "$erroutput ${NC}" | tee -a $LOG
+    exit 1
+  fi
+
+  echo "- Validating required MariaDB packages are available" | tee -a $LOG
+  for i in MariaDB-server MariaDB MariaDB-gssapi-server; do
+    if erroutput=$(yum -q --showduplicates --disablerepo="*" --enablerepo=mariadb list all "$i" 2>&1) && echo "$erroutput" | grep -q '@\?mariadb'; then
+      echo "- Package $i is available" | tee -a $LOG
+    else
+      echo -e "${RED}Required package $i is not available from the MariaDB $MDB_VER repo. Aborting before this upgrade step stops/removes the current database server." | tee -a $LOG
+      echo -e "$erroutput ${NC}" | tee -a $LOG
+      exit 1
+    fi
+  done
+
+  echo "- Preflight complete. Destructive phase begins: stopping db server and replacing packages" | tee -a $LOG
+  if erroutput=$(systemctl stop sw-cp-server 2>&1); then
+    echo "- sw-cp-server stopped" | tee -a $LOG
+  else
+    echo -e "${RED}Warning: failed to stop sw-cp-server" | tee -a $LOG
+    echo -e "$erroutput ${NC}" | tee -a $LOG
+  fi
+
   echo "- Setting innodb_fast_shutdown=0 for clean shutdown" | tee -a $LOG
   mysql --defaults-extra-file="$MYSQL_CREDS_FILE" -e "SET GLOBAL innodb_fast_shutdown=0;" 2>/dev/null || true
 
   echo "- Stopping current db server" | tee -a $LOG
-  if systemctl | grep -i "mariadb.service"; then
-    systemctl stop mariadb
-  elif systemctl | grep -i "mysql.service"; then
-    systemctl stop mysql
+  if systemctl is-active --quiet mariadb; then
+    if erroutput=$(systemctl stop mariadb 2>&1); then
+      echo "- MariaDB service stopped" | tee -a $LOG
+    else
+      echo -e "${RED}Failed to stop MariaDB service" | tee -a $LOG
+      echo -e "$erroutput ${NC}" | tee -a $LOG
+      exit 1
+    fi
+  elif systemctl is-active --quiet mysql; then
+    if erroutput=$(systemctl stop mysql 2>&1); then
+      echo "- MySQL service stopped" | tee -a $LOG
+    else
+      echo -e "${RED}Failed to stop MySQL service" | tee -a $LOG
+      echo -e "$erroutput ${NC}" | tee -a $LOG
+      exit 1
+    fi
+  else
+    echo "- No active MariaDB/MySQL service found" | tee -a $LOG
   fi
 
   echo "- Removing packages" | tee -a $LOG
-  if rpm -qa | grep "MariaDB-server" > /dev/null 2>&1; then
+  if rpm -q MariaDB-server > /dev/null 2>&1; then
     if erroutput=$(rpm --quiet -e --nodeps MariaDB-server 2>&1); then
       echo "- MariaDB-server package erased" | tee -a $LOG
     else
       echo -e "${RED}$erroutput ${NC}" | tee -a $LOG
     fi
-  else
+  elif rpm -q mariadb-server > /dev/null 2>&1; then
     if erroutput=$(rpm --quiet -e --nodeps mariadb-server 2>&1); then
-      echo "- MariaDB-server package erased" | tee -a $LOG
+      echo "- mariadb-server package erased" | tee -a $LOG
     else
       echo -e "${RED}$erroutput ${NC}" | tee -a $LOG
     fi
+  else
+    echo "- No MariaDB server package found to erase" | tee -a $LOG
   fi
-  installed_packages=$(rpm -qa)
   for i in mysql-common mysql-libs mysql-devel mariadb-backup mariadb-gssapi-server; do
-    if echo "$installed_packages" | grep "$i" > /dev/null 2>&1; then
-      mariadb_rpm="$mariadb_rpm $i"
+    if rpm -q "$i" > /dev/null 2>&1; then
+      if erroutput=$(rpm --quiet -e --nodeps "$i" 2>&1); then
+        echo "- $i package erased" | tee -a $LOG
+      else
+        echo -e "${RED}$erroutput ${NC}" | tee -a $LOG
+      fi
     fi
   done
-  if [ -n "$mariadb_rpm" ]; then
-    if erroutput=$(rpm --quiet -e --nodeps "$mariadb_rpm" 2>&1); then
-      echo "- MariaDB packages erased" | tee -a $LOG
-    else
-      echo -e "${RED}$erroutput ${NC}" | tee -a $LOG
-    fi
-  fi
 
   echo "- Updating and installing packages" | tee -a $LOG
   if erroutput=$(yum -y -q update MariaDB-* 2>&1); then
@@ -195,9 +248,21 @@ gpgcheck=1" >/etc/yum.repos.d/mariadb.repo
 
   echo "- Starting MariaDB $MDB_VER" | tee -a $LOG
   if [ "$MDB_VER" = "10.0" ]; then
-    systemctl restart mysql
+    if erroutput=$(systemctl restart mysql 2>&1); then
+      echo "- MySQL service restarted" | tee -a $LOG
+    else
+      echo -e "${RED}Failed to restart MySQL service" | tee -a $LOG
+      echo -e "$erroutput ${NC}" | tee -a $LOG
+      exit 1
+    fi
   else
-    systemctl restart mariadb
+    if erroutput=$(systemctl restart mariadb 2>&1); then
+      echo "- MariaDB service restarted" | tee -a $LOG
+    else
+      echo -e "${RED}Failed to restart MariaDB service" | tee -a $LOG
+      echo -e "$erroutput ${NC}" | tee -a $LOG
+      exit 1
+    fi
   fi
 
   if [ "$MDB_VER" = "10.0" ]; then
@@ -234,7 +299,21 @@ bind_address_fix() {
   fi
 }
 
-MySQL_VERS_INFO=$(mysql --version)
+if erroutput=$(mysql --version 2>&1); then
+  MySQL_VERS_INFO=$erroutput
+else
+  echo -e "${RED}Failed to detect current MySQL/MariaDB version. Is the client package installed?${NC}" | tee -a $LOG
+  echo -e "$erroutput ${NC}" | tee -a $LOG
+  exit 1
+fi
+
+if erroutput=$(mysql --defaults-extra-file="$MYSQL_CREDS_FILE" -e "SELECT 1;" 2>&1); then
+  echo "- Verified database connection with Plesk admin credentials" | tee -a $LOG
+else
+  echo -e "${RED}Failed to connect to the current database with Plesk admin credentials. Aborting before changing packages.${NC}" | tee -a $LOG
+  echo -e "$erroutput ${NC}" | tee -a $LOG
+  exit 1
+fi
 
 if [[ $MySQL_VERS_INFO =~ Distrib\ ([0-9]+)\.([0-9]+)\. ]]; then
   CURRENT_MAJOR="${BASH_REMATCH[1]}"
@@ -252,8 +331,6 @@ fi
 if [ -f "/etc/yum.repos.d/MariaDB.repo" ]; then
   mv /etc/yum.repos.d/MariaDB.repo /etc/yum.repos.d/mariadb.repo
 fi
-
-systemctl stop sw-cp-server
 
 case $MySQL_VERS_INFO in
 *"Distrib 5.5."*)
@@ -558,10 +635,10 @@ esac
 
 # Increase MySQL/MariaDB Packet Size and open file limit. Set log file to default logrotate location
 if [ -f "/etc/my.cnf.d/server.cnf" ]; then
-  sed -i 's/^\[mysqld\]/&\nlog-error=\/var\/lib\/mysql\/mysqld.log/' /etc/my.cnf.d/server.cnf
-  sed -i 's/^\[mysqld\]/&\nmax_allowed_packet=256M/' /etc/my.cnf.d/server.cnf
-  sed -i 's/^\[mysqld\]/&\nopen_files_limit=8192/' /etc/my.cnf.d/server.cnf
-  sed -i 's/^\[mariadb\]/&\nevent_scheduler=ON/' /etc/my.cnf.d/server.cnf
+  grep -q '^log-error=/var/lib/mysql/mysqld.log$' /etc/my.cnf.d/server.cnf || sed -i 's/^\[mysqld\]/&\nlog-error=\/var\/lib\/mysql\/mysqld.log/' /etc/my.cnf.d/server.cnf
+  grep -q '^max_allowed_packet=256M$' /etc/my.cnf.d/server.cnf || sed -i 's/^\[mysqld\]/&\nmax_allowed_packet=256M/' /etc/my.cnf.d/server.cnf
+  grep -q '^open_files_limit=8192$' /etc/my.cnf.d/server.cnf || sed -i 's/^\[mysqld\]/&\nopen_files_limit=8192/' /etc/my.cnf.d/server.cnf
+  grep -q '^event_scheduler=ON$' /etc/my.cnf.d/server.cnf || sed -i 's/^\[mariadb\]/&\nevent_scheduler=ON/' /etc/my.cnf.d/server.cnf
   echo "- server.cnf configuration applied" | tee -a $LOG
 else
   echo -e "${RED}Warning: /etc/my.cnf.d/server.cnf not found, skipping config${NC}" | tee -a $LOG
@@ -600,7 +677,7 @@ if echo "$mdb_ver" | grep -q 10.3.34; then
     echo -e "$erroutput ${NC}" | tee -a $LOG
     exit 1
   fi
-  echo "exclude=MariaDB-shared-10.3.34" >>/etc/yum.repos.d/mariadb.repo
+  grep -q '^exclude=MariaDB-shared-10.3.34$' /etc/yum.repos.d/mariadb.repo || echo "exclude=MariaDB-shared-10.3.34" >>/etc/yum.repos.d/mariadb.repo
 
 elif echo "$mdb_ver" | grep -q 10.4.24; then
 
@@ -612,7 +689,7 @@ elif echo "$mdb_ver" | grep -q 10.4.24; then
     echo -e "$erroutput ${NC}" | tee -a $LOG
     exit 1
   fi
-  echo "exclude=MariaDB-shared-10.4.24" >>/etc/yum.repos.d/mariadb.repo
+  grep -q '^exclude=MariaDB-shared-10.4.24$' /etc/yum.repos.d/mariadb.repo || echo "exclude=MariaDB-shared-10.4.24" >>/etc/yum.repos.d/mariadb.repo
 
 elif echo "$mdb_ver" | grep -q 10.5.15; then
 
@@ -624,7 +701,7 @@ elif echo "$mdb_ver" | grep -q 10.5.15; then
     echo -e "$erroutput ${NC}" | tee -a $LOG
     exit 1
   fi
-  echo "exclude=MariaDB-shared-10.5.15" >>/etc/yum.repos.d/mariadb.repo
+  grep -q '^exclude=MariaDB-shared-10.5.15$' /etc/yum.repos.d/mariadb.repo || echo "exclude=MariaDB-shared-10.5.15" >>/etc/yum.repos.d/mariadb.repo
 
 fi
 
