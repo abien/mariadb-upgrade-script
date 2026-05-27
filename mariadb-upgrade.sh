@@ -108,6 +108,9 @@ case "$MDB_VER" in
   "10.2")
     BASEURL="https://archive.mariadb.org/mariadb-10.2.44/yum/centos7-amd64/"
     ;;
+  "10.5")
+    BASEURL="https://archive.mariadb.org/mariadb-10.5.29/yum/$ID$MAJOR_VER-amd64/"
+    ;;
   *)
     BASEURL="https://yum.mariadb.org/$MDB_VER/$ID$MAJOR_VER-amd64"
     ;;

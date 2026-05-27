@@ -16,7 +16,7 @@ It integrates with Plesk to perform backups, run upgrades, and notify Plesk of v
 
 ## What It Does
 - Optional full backup of all databases via `mysqldump` to `/root/all_databases_pre_maria_upgrade.sql.gz`.
-- Configures MariaDB repositories per upgrade step (e.g., `http://yum.mariadb.org/10.11/...`).
+- Configures MariaDB repositories per upgrade step, using archived repositories for EOL intermediate releases.
 - Stops services, removes incompatible packages, installs target packages.
 - Runs `mysql_upgrade` and applies sensible defaults in `server.cnf` (e.g., `max_allowed_packet`, `open_files_limit`, log link).
 - Notifies Plesk about package changes and enables `unix_socket` so `mysqladmin` can be used without a password.
